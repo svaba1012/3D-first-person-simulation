@@ -1,6 +1,9 @@
 #version 330
 
 in vec3 vert;
+in vec3 vert_color;
+
+out vec3 frag_color;
 
 uniform float z_near;
 uniform float z_far;
@@ -41,4 +44,5 @@ mat4 lookat() {
 
 void main() {
     gl_Position = perspective() * lookat() * vec4(vert, 1.0);
+    frag_color = vert_color;
 }

@@ -4,22 +4,24 @@ import moderngl
 
 from World import World
 
-from Window import Window
-
 from Character import Character
 
-import time
+import moderngl_window as mglw
 
 
-    
+class AppWindow(mglw.WindowConfig):
 
-class PerspectiveProjection(Window):
-
+    gl_version = (3, 3)
+    title = "3D First Person"
+    window_size = (1280, 720)
+    aspect_ratio = 16 / 9
+    resizable = True
+    fullscreen = True
     MOV_SPEED = 0.2
-
-    character = Character()
-
     dt = 0
+    
+    # instantiate first person character of the game/simulation 
+    character = Character()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -49,72 +51,77 @@ class PerspectiveProjection(Window):
         self.prog['ratio'].value = self.aspect_ratio
         self.prog['fovy'].value = 60
 
-        self.prog['eye'].value = self.character.posVec
-        self.prog['center'].value = self.character.posVec + self.character.lookVec
-        self.prog['up'].value = (0, 0, 1) #gde je gore
+        self.prog['eye'].value = self.character.posVec # position of camera
+        self.prog['center'].value = self.character.posVec + self.character.lookVec # look orientation of camera
+        self.prog['up'].value = (0, 0, 1) #where is up, defaults to z = 1
 
-        grid = []
+        vertices = []
         
+        # generate world and store vertices
         world = World()
+        vertices = world.generateWorld()
 
-        grid = world.makeWalls([[{"x": 1.0, "y": 2.0}, 
-                                 {"x": 2.0, "y": 1.0}, 
-                                 {"x": 1.5, "y": 0.0}]])
+        vertices = np.array(vertices, dtype='f4')
 
-        grid = np.array(grid, dtype='f4')
-
-
-        self.vbo = self.ctx.buffer(grid)
-        self.vao = self.ctx.vertex_array(self.prog, [self.vbo.bind("vert")])
+        # pass vertices to shaders
+        self.vbo = self.ctx.buffer(vertices)
+        # self.vao = self.ctx.vertex_array(self.prog, [self.vbo.bind("vert")])
+        self.vao = self.ctx.vertex_array(self.prog, [
+        (self.vbo, "3f 3f", "vert", "vert_color")
+    ]);
 
     
 
     def render(self, time: float, frame_time: float):
+        # apply character movement and rotation
         self.character.move(frame_time)
+        self.character.rotate()
         self.prog['eye'].value = self.character.posVec
         self.prog['center'].value = self.character.posVec + self.character.lookVec
         self.ctx.clear(1.0, 1.0, 1.0)
+        # render vertices
         self.vao.render(moderngl.TRIANGLES, 65 * 4)
         
-        # print(1.0/frame_time)
+        # print FPS
+        print(1.0/frame_time)
 
 
     def key_event(self, key, action, modifiers):
         # Key presses
-        
-
+        # start character moving
         if action == self.wnd.keys.ACTION_PRESS:
             if key == self.wnd.keys.W:
                 self.character.forward = 1
             if key == self.wnd.keys.S:
-                self.character.forward = -1                
+                self.character.backward = -1                
             if key == self.wnd.keys.D:
                 self.character.right = 1 
             if key == self.wnd.keys.A:
-                self.character.right = -1 
+                self.character.left = -1 
             if key == self.wnd.keys.Q:
-                self.character.movSpeed = 1.5
+                self.character.movSpeed = 3.0
 
         # Key releases
+        # stop character moving
         elif action == self.wnd.keys.ACTION_RELEASE:
             if key == self.wnd.keys.W:
                 self.character.forward = 0
             if key == self.wnd.keys.S:
-                self.character.forward = 0
+                self.character.backward = 0
             if key == self.wnd.keys.D:
                 self.character.right = 0 
             if key == self.wnd.keys.A:
-                self.character.right = 0 
+                self.character.left = 0 
             if key == self.wnd.keys.Q:
-                self.character.movSpeed = 1.0
+                self.character.movSpeed = 2.0
                 
+    def mouse_position_event(self, x: int, y: int, dx: int, dy: int):
+        self.character.setRotation(dx, dy)
 
-    def unicode_char_entered(self, char: str):
-        print('character entered:', char)
-        
+        return super().mouse_position_event(x, y, dx, dy)
 
 
 if __name__ == '__main__':
     
-    PerspectiveProjection.run()
+    AppWindow.run()
     
