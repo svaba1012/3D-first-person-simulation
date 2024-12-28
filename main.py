@@ -2,6 +2,8 @@ import numpy as np
 
 import moderngl
 
+import screeninfo
+
 from World import World
 
 from Character import Character
@@ -11,10 +13,13 @@ import moderngl_window as mglw
 
 class AppWindow(mglw.WindowConfig):
 
+    monitor = screeninfo.get_monitors()[0]
+    screen_width = monitor.width 
+    screen_height = monitor.height 
     gl_version = (3, 3)
     title = "3D First Person"
-    window_size = (1280, 720)
-    aspect_ratio = 16 / 9
+    window_size = (screen_width, screen_height)
+    aspect_ratio = screen_width / screen_height
     resizable = True
     fullscreen = True
     MOV_SPEED = 0.2
@@ -25,6 +30,8 @@ class AppWindow(mglw.WindowConfig):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+      
 
         self.movingButtonsPressed = False
         self.forwardPressed = False
@@ -70,9 +77,9 @@ class AppWindow(mglw.WindowConfig):
         (self.vbo, "3f 3f", "vert", "vert_color")
     ]);
 
-    
+   
 
-    def render(self, time: float, frame_time: float):
+    def on_render(self, time: float, frame_time: float):
         # apply character movement and rotation
         self.character.move(frame_time)
         self.character.rotate()
@@ -83,15 +90,17 @@ class AppWindow(mglw.WindowConfig):
         self.vao.render(moderngl.TRIANGLES, 65 * 4)
         
         # print FPS
-        print(1.0/frame_time)
+        # print(1.0/frame_time)
 
 
-    def key_event(self, key, action, modifiers):
+    def on_key_event(self, key, action, modifiers):
         # Key presses
         # start character moving
         if action == self.wnd.keys.ACTION_PRESS:
+            print(key)
             if key == self.wnd.keys.W:
                 self.character.forward = 1
+                print("W")
             if key == self.wnd.keys.S:
                 self.character.backward = -1                
             if key == self.wnd.keys.D:
@@ -115,7 +124,7 @@ class AppWindow(mglw.WindowConfig):
             if key == self.wnd.keys.Q:
                 self.character.movSpeed = 2.0
                 
-    def mouse_position_event(self, x: int, y: int, dx: int, dy: int):
+    def on_mouse_position_event(self, x: int, y: int, dx: int, dy: int):
         self.character.setRotation(dx, dy)
 
         return super().mouse_position_event(x, y, dx, dy)
