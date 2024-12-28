@@ -17,3 +17,9 @@ pip install screeninfo
 ```
 python.exe main.py
 ```
+
+### Instructions
+
+- Move on keyboard WASD
+- Orientate with mouse
+- Exit on ESC
